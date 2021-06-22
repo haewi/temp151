@@ -1,0 +1,117 @@
+c class Canvas extends JPanel{
+		// repaint() 실행시 실행됨
+		@Override
+		protected void paintComponent(Graphics g) {
+			one=1;
+			super.paintComponent(g);
+
+			Graphics2D g2 = (Graphics2D) g;
+
+			for(int j=0; j<shapes.size(); j++) {
+				ShapeObject so = shapes.get(j);
+				if(!so.visible) continue;
+				if(!select.isEmpty() && select.contains(j)) {
+					g2.setColor(new Color(68, 178, 250));
+				}
+				else {
+					g2.setColor(so.penColor);
+				}
+				g2.setStroke(new BasicStroke(so.stroke, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+//				g2.setStroke(new BasicStroke(so.stroke, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {9}, 3));
+				if(so.shape==LINE) {
+					g2.drawLine(so.start.x, so.start.y, so.end.x, so.end.y);
+				}
+				else if(so.shape==RECT) {
+					if(so.fill) {
+						g2.fillRect(so.start.x, so.start.y, so.width, so.height);
+					}
+					else {
+						g2.drawRect(so.start.x, so.start.y, so.width, so.height);
+					}
+				}
+				else if(so.shape == CIRCLE) {
+					if(so.fill) {
+						g2.fillOval(so.start.x, so.start.y, so.width, so.height);
+					}
+					else {
+						g2.drawOval(so.start.x, so.start.y, so.width, so.height);
+					}
+				}
+				else if(so.shape == POLYLINE) {
+
+//					System.out.println("doing size: " + so.doing.size());
+					
+					if(so.doing.isEmpty()) {
+//						System.out.println("Polyline x.length: " + so.x.length);
+						g2.drawPolyline(so.x, so.y, so.x.length);
+					} // polyline이 완성되었을 때
+					else {	
+						
+//						System.out.println("drawing polyline");
+//						System.out.println("shapes size: " + shapes.size());
+						
+						int[] x = new int[so.doing.size()];
+						int[] y = new int[so.doing.size()];
+
+						for(int i=0; i<so.doing.size(); i++) {
+							x[i] = so.doing.get(i).x;
+							y[i] = so.doing.get(i).y;
+						}
+
+						g2.drawPolyline(x, y, x.length);
+
+					} // polyline이 완성되기 전 
+				}
+				else if(so.shape == PEN) {
+					if(so.doing.isEmpty()) {
+						g2.drawPolyline(so.x, so.y, so.x.length);
+					} // pen이 완성되었을 때
+					else {
+						
+//						System.out.println("drawing pen");
+//						System.out.println("shapes size: " + shapes.size());
+						
+						int[] x = new int[so.doing.size()];
+						int[] y = new int[so.doing.size()];
+
+						for(int i=0; i<so.doing.size(); i++) {
+//							g2.drawLine(x[i], y[i], x[i+1], y[i+1]);
+							x[i] = so.doing.get(i).x;
+							y[i] = so.doing.get(i).y;
+						}
+
+						g2.drawPolyline(x, y, x.length);
+
+					} // pen이 완성되기 전 
+				}
+				else if(so.shape == ERASER) {
+					g2.setColor(Color.white);
+					if(so.doing.isEmpty()) {
+						g2.drawPolyline(so.x, so.y, so.x.length);
+					} // 지우개가 완성되었을 때
+					else {
+						
+//						System.out.println("drawing eraser");
+//						System.out.println("shapes size: " + shapes.size());
+						
+						int[] x = new int[so.doing.size()];
+						int[] y = new int[so.doing.size()];
+
+						for(int i=0; i<so.doing.size(); i++) {
+							x[i] = so.doing.get(i).x;
+							y[i] = so.doing.get(i).y;
+						}
+						
+						g2.drawPolyline(x, y, x.length);
+					} // 지우개가 완성되기 전 
+				}
+			}
+			
+			if(drag.shape == DRAG) {
+				g2.setColor(Color.LIGHT_GRAY);
+				g2.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {9}, 3));
+				g2.drawRect(Math.min(drag.start.x, drag.end.x), Math.min(drag.start.y, drag.end.y),Math.abs(drag.start.x-drag.end.x), Math.abs(drag.start.y-drag.end.y));
+			}
+		}
+
+	}

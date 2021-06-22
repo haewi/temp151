@@ -1,0 +1,267 @@
+c class ButtonListen implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			two=1;
+			
+			String str = e.getActionCommand();
+
+			if(str.equals("Line")) {
+				if(function==LINE) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else{
+					function = LINE;
+					mode.setText("LINE");
+				}
+				
+			}
+			else if(str.equals("Rect")) {
+				if(function==RECT) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = RECT;
+					mode.setText("RECT");
+				}
+				
+			}
+			else if(str.equals("Circle")) {
+				if(function==CIRCLE) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = CIRCLE;
+					mode.setText("CIRCLE");
+				}
+				
+			}
+			else if(str.equals("Polyline")) {
+				if(function==POLYLINE) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = POLYLINE;
+					mode.setText("POLYLINE");
+				}
+				
+			}
+			else if(str.equals("Color")) {
+				color = JColorChooser.showDialog(null, "Choose Color", Color.black);
+			}
+			else if(str.equals("<--")) {
+				if(shapes.isEmpty()) return;
+				deleteShape.add(shapes.pop());
+				
+				
+				if(deleteShape.peek().shape == CLEAR) {
+					int size = deleteShape.peek().clear.size();
+					for(int i=size-1; i>=0; i--) {
+						shapes.add(deleteShape.peek().clear.get(i));
+					}
+				}
+				else if(deleteShape.peek().shape == DRAG) {
+					ShapeObject so = deleteShape.peek();
+					for(int i=0; i<so.select.size(); i++) {
+						relocate(shapes.get(so.select.get(i)), -so.dif_x, -so.dif_y);
+					}
+				}
+				else if(deleteShape.peek().shape == DELETE) {
+					for(int i=0; i<deleteShape.peek().clear.size(); i++) {
+						deleteShape.peek().clear.get(i).visible = true;
+					}
+				}
+				
+				canvas.repaint();
+			}
+			else if(str.equals("-->")) {
+				if(deleteShape.isEmpty()) return;
+				
+				if(deleteShape.peek().shape == CLEAR) {
+					int size = deleteShape.peek().clear.size();
+					for(int i=0; i<size; i++) {
+						shapes.pop();
+					}
+				}
+				else if(deleteShape.peek().shape == DRAG) {
+					ShapeObject so = deleteShape.peek();
+					for(int i=0; i<so.select.size(); i++) {
+						relocate(shapes.get(so.select.get(i)), so.dif_x, so.dif_y);
+					}
+				}
+				else if(deleteShape.peek().shape == DELETE) {
+					for(int i=0; i<deleteShape.peek().clear.size(); i++) {
+						deleteShape.peek().clear.get(i).visible = false;
+					}
+				}
+				
+				shapes.add(deleteShape.pop());
+				canvas.repaint();
+			}
+			else if(str.equals("Clear")) {
+				if(function == CLEAR) {
+					fill = false;
+					fillMode.setText("Fill: No");
+					color = Color.black;
+					shapes.clear();
+					deleteShape.clear();
+					select.clear();
+					copied.clear();
+					delete.clear();
+					move = false;
+					drag.doing.clear();
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = CLEAR;
+					mode.setText("CLEAR");
+					
+					int size =  shapes.size();
+					ShapeObject newShape = new ShapeObject();
+					newShape.shape = CLEAR;
+					for(int i=0; i<size; i++) {
+						newShape.clear.add(shapes.pop());
+					}
+					shapes.add(newShape);
+					deleteShape.clear();
+					canvas.repaint();
+				}
+			}
+			else if(str.equals("Pen")) {
+				if(function==PEN) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = PEN;
+					mode.setText("PEN");
+				}
+				
+			}
+			else if(str.equals("Eraser")) {
+				if(function==ERASER) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = ERASER;
+					mode.setText("ERASER");
+				}
+				
+			}
+			else if(str.equals("Select")) {
+				if(function == SELECT) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = SELECT;
+					mode.setText("SELECT");
+				}
+			}
+			else if(str.equals("Copy")) {
+				function = DEFAULT;
+				mode.setText("DEFAULT");
+				if(select.isEmpty()) {
+					function = SELECT;
+					mode.setText("SELECT");
+					return;
+				}
+				shapes.pop();
+				copied.clear(); // 원상 복귀 후,
+				for(int i=0; i<select.size(); i++) {
+//					System.out.println("select.size(): " + select.size());
+					copied.add(ShapeObject.copy(shapes.get(select.get(i)))); // 복사할 것 추가하기
+//					System.out.println("copied.size(): " + copied.size());
+				}
+			}
+			else if(str.equals("Paste")) {
+				if(function == PASTE) {
+					function = DEFAULT;
+					mode.setText("DEFAULT");
+				}
+				else {
+					function = PASTE;
+					mode.setText("PASTE");
+					
+					for(int i=0; i<copied.size(); i++) {
+						ShapeObject so = ShapeObject.copy(copied.get(i));
+						copied.set(i, so);
+					}
+				}
+			}
+			else if(str.equals("Fill")) {
+				fill = !fill;
+				if(fill) {
+					fillMode.setText("Fill: Yes");
+				}
+				else {
+					fillMode.setText("Fill: No");
+				}
+			}
+			else if(str.equals("Delete")) {
+				function = DEFAULT;
+				mode.setText("DEFAULT");
+				
+				if(function != POLYLINE) {
+					for(ShapeObject s: shapes) {
+						if(s.shape == POLYLINE) {
+							arrayListToArray(s);
+							s.doing.clear();
+						}
+					}
+				}
+				
+				if(select.isEmpty()) {
+					function = SELECT;
+					mode.setText("SELECT");
+					return;
+				}
+				
+				ShapeObject so = new ShapeObject();
+				so.shape = DELETE;
+				
+				for(int i=0; i<select.size(); i++) {
+//					System.out.println("select.size(): " + select.size());
+					so.clear.add(shapes.get(select.get(i))); // 삭제할 것 추가하기
+//					System.out.println("copied.size(): " + copied.size());
+				}
+				
+				for(int i=0; i<select.size(); i++) {
+					shapes.get((int)select.get(i)).visible = false;
+//					System.out.println("select.size(): " + select.size() + shapes.get((int)select.get(i)).visible);
+				}
+				shapes.pop();
+				shapes.add(so);
+//				System.out.println("clear size: " + shapes.peek().clear.size());
+//				System.out.println(shapes.size());
+//				for(int i=0; i<shapes.size(); i++) {
+//					System.out.println("shape: " + shapes.get(i).shape);
+//				}
+			}
+			
+			if(function != POLYLINE) {
+				for(ShapeObject s: shapes) {
+					if(s.shape == POLYLINE) {
+						arrayListToArray(s);
+						s.doing.clear();
+					}
+				}
+			}
+			if(function != SELECT || function != PASTE) {
+				select.clear();
+				canvas.repaint();
+			}
+			
+
+//			System.out.println(shapes.size());
+//			for(int i=0; i<shapes.size(); i++) {
+//				System.out.println("shape: " + shapes.get(i).shape);
+//			}
+		}
+
+	}
