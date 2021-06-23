@@ -1,0 +1,181 @@
+package edu.handong.round2;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.Stack;
+
+import javax.swing.*;
+import javax.swing.event.*;
+
+
+public class Frame {
+
+	// 위치 찾는 변수들
+//	j;
+	int one, two, three, four, five, six, seven;
+
+	// 선택 가능한 도구들
+	public static final int DEFAULT = 0;
+	public static final int LINE = 1;
+	public static final int RECT = 2;
+	public static final int CIRCLE = 3;
+	public static final int POLYLINE = 4;
+	public static final int CLEAR = 5;
+	public static final int PEN = 6;
+	public static final int ERASER = 7;
+	public static final int SELECT = 8;
+	public static final int DRAG = 9;
+	public static final int COPY = 10;
+	public static final int PASTE = 11;
+	public static final int DELETE = 12;
+
+	// 선택한 기능
+	public int function = DEFAULT;
+
+	// 현재 굵기와 그 slider, 채우기 상태, 색깔
+	int stroke=3;
+	JSlider slider;
+	boolean fill=false;
+	Color color = Color.black;
+
+	// 처음으로 선택된 지점, 마지막으로 선택된 지점
+	Point initPoint; //, lastPoint;
+
+	// 기본 세팅
+	JFrame mainFrame;
+	JToolBar toolbar;
+	Canvas canvas;
+	Label mode = new Label("DEFAULT");
+	Label fillMode = new Label("Fill: No");
+
+	// 현재까지 그려진 도형들
+	Stack<ShapeObject> shapes = new Stack<ShapeObject>();
+	Stack<ShapeObject> deleteShape = new Stack<ShapeObject>();
+	
+	// 선택된 도형들의 index, select
+	ArrayList<Integer> select = new ArrayList<Integer>();//null;
+	boolean move=false;
+	ShapeObject drag = new ShapeObject();
+	
+	// 복사한 도형들
+	ArrayList<ShapeObject> copied = new ArrayList<ShapeObject>();
+	
+	// 한번에 삭제할 도형들
+	ArrayList<ShapeObject> delete = new ArrayList<ShapeObject>();
+	
+
+	public Frame() {
+		//mainFrame 기본설정
+		mainFrame = new JFrame("그림판");
+		mainFrame.setBounds(0, 200, 800, 600);
+		mainFrame.setVisible(true);
+		mainFrame.getContentPane().setBackground(Color.white);
+		mainFrame.setBackground(new Color(87, 153, 245));
+		mainFrame.addWindowListener(new WindowAdapter() {
+
+			@Override
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+
+		});
+
+		// canvas 기본 설정
+		canvas = new Canvas();
+		canvas.addMouseListener(new MouseListen());
+		canvas.addMouseMotionListener(new MouseListen());
+		canvas.setBounds(0, 100, 800, 600);
+//		canvas.setBounds(0, 0, 800, 600);
+		canvas.setBackground(Color.white);
+		mainFrame.add(canvas);
+
+		// Toolbar 기본 설정
+		toolbar = new JToolBar();
+		toolbar.setBounds(0, 0, 800, 97);
+//		toolbar.setBounds(700, 0, 100, 600);
+		toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.Y_AXIS));
+//		toolbar.setLayout(new FlowLayout());
+		toolbar.setBackground(new Color(218, 207, 251));
+
+		mainFrame.add(toolbar);
+
+		// toolbar용 버튼 - 첫번째 줄
+		ArrayList<Button> toolButton = new ArrayList<Button>();
+		String[] toolbarLabels = new String[] {"Line", "Rect", "Circle", "Polyline", "<--", "-->"};
+		ButtonListen listener = new ButtonListen();
+		for(int i=0; i<toolbarLabels.length; i++) {
+			Button tempBtn;
+			tempBtn = new Button(toolbarLabels[i]);
+			tempBtn.setSize(80, 40);
+			tempBtn.setLocation(10+i*80, 7);
+//			tempBtn.setLocation(14, 5+50*i);
+			tempBtn.addActionListener(listener);
+			tempBtn.setFont(new Font("Chalkboard", Font.PLAIN, 15));
+//			tempBtn.setForeground(Color.black);
+			toolButton.add(tempBtn);
+		}
+
+		// toolbar에 button 넣기
+		for(Button b: toolButton)
+			toolbar.add(b);
+
+		// slider 넣기
+		slider = new JSlider(0, 50, 3);
+		slider.addChangeListener(new ChangeListen());
+		slider.setMajorTickSpacing(10);
+		slider.setMinorTickSpacing(1);
+		slider.setPaintTicks(true);
+		slider.setPaintLabels(true);
+		slider.setSnapToTicks(true);
+		slider.setBounds(10+80*6+50, 7, 170, 40);
+//		slider.setBounds(0, 5+50*7+20, 100, 60);
+		stroke = (int) slider.getValue();
+
+		Label label = new Label("Stroke:");
+		label.setFont(new Font("Chalkboard", Font.PLAIN, 15));
+		label.setBounds(10+80*6, 12, 50, 30);
+//		label.setBounds(40, 8+50*7+10, 80, 30);
+		toolbar.add(label);
+		toolbar.add(slider);
+		
+		// clear button
+		Button btn = new Button("Clear");
+		btn.setBounds(10+80*7+140, 7, 80, 40);
+		btn.addActionListener(listener);
+		btn.setFont(new Font("Chalkboard", Font.PLAIN, 15));
+		
+		toolbar.add(btn);
+		
+		// toolbar용 버튼 - 2번째 줄
+		toolbarLabels = new String[] {"Pen", "Color", "Fill", "Eraser", "Delete", "Select", "Copy", "Paste"};
+		for(int i=0; i<toolbarLabels.length; i++) {
+			Button tempBtn;
+			tempBtn = new Button(toolbarLabels[i]);
+			tempBtn.setSize(80, 40);
+			tempBtn.setLocation(10+i*80, 50);
+//			tempBtn.setLocation(14, 5+50*i);
+			tempBtn.addActionListener(listener);
+			tempBtn.setFont(new Font("Chalkboard", Font.PLAIN, 15));
+//			tempBtn.setForeground(Color.black);
+			toolButton.add(tempBtn);
+		}
+		
+		// toolbar에 button 넣기
+		for(Button b: toolButton)
+			toolbar.add(b);
+		
+		// fill 상태 알려주기
+		fillMode.setBounds(10+80*7+90, 50, 50, 40);
+		toolbar.add(fillMode);
+		
+		// mode 알려주기
+		mode.setBounds(10+80*7+150, 50, 80, 40);
+		toolbar.add(mode);
+	}
